@@ -1,6 +1,8 @@
 streamlit
 opencv-python
 deepface
+fer
 python-dotenv
 matplotlib
-pandas 
+pandas
+moviepy 

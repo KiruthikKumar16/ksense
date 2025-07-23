@@ -6,22 +6,33 @@ import numpy as np
 # Initialize FER detector once
 fer_detector = FER(mtcnn=True)
 
-# Returns (dominant_emotion, emotions_dict) for both models
-
+# Returns a list of dicts: [{box, dominant_emotion, emotions_dict}]
 def analyze_emotion(frame, model='deepface'):
+    results = []
     if model == 'fer':
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        result = fer_detector.detect_emotions(rgb_frame)
-        if result and 'emotions' in result[0]:
-            emotions = result[0]['emotions']
+        faces = fer_detector.detect_emotions(rgb_frame)
+        for face in faces:
+            emotions = face['emotions']
             dominant = max(emotions, key=emotions.get)
-            return dominant, emotions
-        return 'unknown', {}
+            box = face['box']  # (x, y, w, h)
+            results.append({'box': box, 'dominant_emotion': dominant, 'emotions': emotions})
+        return results
     else:
         try:
+            # DeepFace does not natively support multi-face, so fallback to single face
             result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
-            emotions = result[0]['emotion'] if isinstance(result, list) else result['emotion']
-            dominant = result[0]['dominant_emotion'] if isinstance(result, list) else result['dominant_emotion']
-            return dominant, emotions
+            if isinstance(result, list):
+                for r in result:
+                    emotions = r['emotion']
+                    dominant = r['dominant_emotion']
+                    box = r.get('region', None)  # DeepFace may return region as box
+                    results.append({'box': box, 'dominant_emotion': dominant, 'emotions': emotions})
+            else:
+                emotions = result['emotion']
+                dominant = result['dominant_emotion']
+                box = result.get('region', None)
+                results.append({'box': box, 'dominant_emotion': dominant, 'emotions': emotions})
+            return results
         except Exception as e:
-            return "unknown", {} 
+            return [] 
