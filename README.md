@@ -1,6 +1,6 @@
 # ksense: Real-time Emotion Detection & Mental Wellness Alert System
 
-[![Deploy to Streamlit Cloud](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://streamlit.io/cloud)
+
 
 ## Features
 - Real-time webcam emotion detection (DeepFace + FER + OpenCV)
