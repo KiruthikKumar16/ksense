@@ -6,7 +6,7 @@ from detect import analyze_emotion
 from camera import get_webcam_frame
 from plot import plot_emotion_trend
 from alert import check_and_alert
-from utils import log_emotion, load_env
+from utils import log_emotion, log_emotion_csv, get_csv_log, load_env
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -41,6 +41,11 @@ def get_emotion_log():
     if 'emotion_log' not in st.session_state:
         st.session_state['emotion_log'] = []
     return st.session_state['emotion_log']
+
+# --- CSV log download button ---
+if os.path.isfile('emotion_log.csv'):
+    with open('emotion_log.csv', 'rb') as f:
+        st.download_button('Download Emotion Log (CSV)', f, file_name='emotion_log.csv', mime='text/csv')
 
 # --- Live webcam detection ---
 FRAME_WINDOW = st.empty()
@@ -82,6 +87,12 @@ if st.session_state['live_running']:
             else:
                 emotion_text.markdown(f"**Detected Emotion:** {detected_emotion}")
             log_emotion(detected_emotion)
+            log_emotion_csv(
+                timestamp=pd.Timestamp.now().isoformat(),
+                emotion=detected_emotion,
+                model=model_choice,
+                confidence=confidence if confidence is not None else ''
+            )
             check_and_alert(get_emotion_log())
             # Show trend graph
             df = pd.DataFrame(get_emotion_log(), columns=["timestamp", "emotion"])
@@ -120,6 +131,12 @@ if uploaded:
         st.markdown(f"**Detected Emotion:** {detected_emotion} (Confidence: {confidence:.2%})")
     else:
         st.markdown(f"**Detected Emotion:** {detected_emotion}")
+    log_emotion_csv(
+        timestamp=pd.Timestamp.now().isoformat(),
+        emotion=detected_emotion,
+        model=model_choice,
+        confidence=confidence if confidence is not None else ''
+    )
     if emotions_dict:
         fig, ax = plt.subplots(figsize=(6, 2))
         ax.bar(emotions_dict.keys(), emotions_dict.values(), color='skyblue')
