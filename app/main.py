@@ -74,7 +74,13 @@ if st.session_state['live_running']:
             frame = cv2.flip(frame, 1)
             detected_emotion, emotions_dict = analyze_emotion(frame, model=model_choice)
             FRAME_WINDOW.image(frame, channels="BGR")
-            emotion_text.markdown(f"**Detected Emotion:** {detected_emotion}")
+            confidence = None
+            if emotions_dict and detected_emotion in emotions_dict:
+                confidence = emotions_dict[detected_emotion]
+            if confidence is not None:
+                emotion_text.markdown(f"**Detected Emotion:** {detected_emotion} (Confidence: {confidence:.2%})")
+            else:
+                emotion_text.markdown(f"**Detected Emotion:** {detected_emotion}")
             log_emotion(detected_emotion)
             check_and_alert(get_emotion_log())
             # Show trend graph
@@ -107,6 +113,13 @@ if uploaded:
     img = cv2.imdecode(file_bytes, 1)
     detected_emotion, emotions_dict = analyze_emotion(img, model=model_choice)
     st.image(img, channels="BGR", caption=f"Detected Emotion: {detected_emotion}")
+    confidence = None
+    if emotions_dict and detected_emotion in emotions_dict:
+        confidence = emotions_dict[detected_emotion]
+    if confidence is not None:
+        st.markdown(f"**Detected Emotion:** {detected_emotion} (Confidence: {confidence:.2%})")
+    else:
+        st.markdown(f"**Detected Emotion:** {detected_emotion}")
     if emotions_dict:
         fig, ax = plt.subplots(figsize=(6, 2))
         ax.bar(emotions_dict.keys(), emotions_dict.values(), color='skyblue')
